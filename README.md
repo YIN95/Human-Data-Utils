@@ -12,8 +12,10 @@ Please check the information on this page: [TotalCapture Dataset](https://cvssp.
 
 ### Data Preparation
 
-To request access to the TotalCapture Dataset, or for other queries please contact: a.gilbert@surrey.ac.uk
+To request access to the TotalCapture Dataset, or for other queries please contact: a.gilbert@surrey.ac.uk.
+
 Download the TotalCapture Dataset in the following format:
+```
 datafolder/
     |->S1/
         |->gyro_mag/
@@ -35,3 +37,4 @@ datafolder/
             |-> walking3/
     |->.../
     |->S5/
+```

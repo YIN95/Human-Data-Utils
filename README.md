@@ -2,7 +2,7 @@
 
 ## List of Data
 
-    * [TotalCapture](## TotalCapture)
+    * [TotalCapture](##TotalCapture)
 
 ## TotalCapture
 

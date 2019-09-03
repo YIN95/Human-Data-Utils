@@ -1,11 +1,11 @@
 #!/bin/bash
 echo "Convert Videos to Images ..."
 datafolder=/mnt/md0/yinw/project/data/totalcapture
-for subject in 'S1' 'S2' 'S3'
+for subject in 'S4' 'S5'
 do
     echo $subject
 
-    for action in 'acting1' 'acting2' 'acting3' 'freestyle1' 'freestyle2' 'freestyle3' 'rom1' 'rom2' 'rom3' 'walking1' 'walking2' 'walking3'
+    for action in 'acting3' 'freestyle1' 'freestyle3' 'rom3' 'walking2'
     do
         videofolder=$datafolder/$subject/video/$action
         savefolder=$datafolder/$subject/images/$action/

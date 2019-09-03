@@ -101,6 +101,9 @@ class TotalCapture(Dataset):
         imu_sensors = quaternion.from_float_array(imu_sensors)
 
         # bone
+        # inverse
+        imu_bone = -imu_bone
+        imu_bone[:, 0] = -imu_bone[:, 0]
         imu_bone = quaternion.from_float_array(imu_bone)
         imu_bone = np.tile(imu_bone, imu_sensors_length)
 
@@ -109,7 +112,7 @@ class TotalCapture(Dataset):
         imu_ref = np.tile(imu_ref, imu_sensors_length)
 
         # R^g_bi = R_ig Â· R_i Â· (R_ib)^âˆ’1
-        imu_sensors = imu_ref*imu_sensors/imu_bone
+        imu_sensors = imu_ref*imu_sensors*imu_bone
         imu_sensors = quaternion.as_float_array(imu_sensors).astype(np.float32)
 
         imu_sensors = imu_sensors.reshape(

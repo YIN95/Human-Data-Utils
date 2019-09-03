@@ -1,12 +1,9 @@
 #!/bin/bash
 echo "Convert Videos to Images ..."
 
-arg1=$1
+datafolder=$1
 arg2=$2
-datafolder=${arg1:-1} 
 multi_num=${arg2:-4}
-
-datafolder=/media/ywj/Data/totalcapture/totalcapture
 
 # ----------------------------------------------------
 tempfifo=$$.fifo
@@ -41,7 +38,7 @@ do
             read -u1000
             video_path=$videofolder/${file}
             echo $video_path \n
-            python preprocess_vid2imgs.py --videoPath $video_path --savePath $savefolder
+            python video2images.py --videoPath $video_path --savePath $savefolder
             echo >&1000
         done &
     done
@@ -62,7 +59,7 @@ do
             read -u1000
             video_path=$videofolder/${file}
             echo $video_path \n            
-            python preprocess_vid2imgs.py --videoPath $video_path --savePath $savefolder 
+            python video2images.py --videoPath $video_path --savePath $savefolder 
             echo >&1000
         done &
     done

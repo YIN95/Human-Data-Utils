@@ -14,7 +14,7 @@ Please check the information on this page: [TotalCapture Dataset](https://cvssp.
 
 To request access to the TotalCapture Dataset, or for other queries please contact: a.gilbert@surrey.ac.uk.
 
-Download the TotalCapture Dataset in the following format:
+Download the TotalCapture Dataset and prepare in the following format:
 ```
 datafolder/
     |->S1/
@@ -38,3 +38,12 @@ datafolder/
     |->.../
     |->S5/
 ```
+
+### Data Preprocess
+
+Convert all videos to images:
+```shell
+    bash video2images.sh data_dir num_of_processes
+```
+<!-- bash video2images.sh /media/ywj/Data/totalcapture/totalcapture 4 -->
+<!-- bash video2images.sh /mnt/md0/yinw/project/data/totalcapture 4 -->

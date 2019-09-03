@@ -5,12 +5,14 @@ Author:
 """
 
 import os
+import re
 import quaternion
 
 import numpy as np
 import pandas as pd
 
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 actionList = {'acting1', 'acting2', 'acting3',
               'freestyle1', 'freestyle2', 'freestyle3',
@@ -47,12 +49,45 @@ class TotalCapture(Dataset):
                                  'walking1', 'walking3',
                                  'rom1', 'rom2', 'rom3']
         self.testing_actions = ['acting3', 'freestyle3', 'walking2']
+        self.data_dict = {}
 
-        # for sub in self.training_subjects:
-        #     # self.data_dict[sub] = {}
-        #     for act in self.training_actions:
-        #         pass
-        self.init_imu(self.training_subjects[0], self.training_actions[0])
+        for sub in tqdm(self.training_subjects,
+                        total=len(self.training_subjects),
+                        desc='Scanning Training Data'):
+            self.data_dict[sub] = {}
+            for act in tqdm(self.training_actions,
+                            total=len(self.training_actions),
+                            desc='Subject - {}'.format(sub)):
+                self.data_dict[sub][act] = {}
+                self.data_dict[sub][act]['len_imu'] = self.get_len_imu(
+                    sub, act)
+                self.data_dict[sub][act]['len_video'] = self.get_len_video(
+                    sub, act)
+                self.data_dict[sub][act]['len'] = min(
+                    self.data_dict[sub][act]['len_imu'],
+                    self.data_dict[sub][act]['len_video'])
+        # self.init_imu(self.training_subjects[0], self.training_actions[0])
+        self.get_len_imu(self.training_subjects[0], self.training_actions[0])
+
+    def get_len_imu(self, sub, act):
+        imu_path = os.path.join(self.data_path, sub, 'imu')
+        sub_lower = str.lower(sub)
+        imu_sensors_path = os.path.join(
+            imu_path, '{0}_{1}_Xsens.sensors'.format(sub_lower, act))
+        with open(imu_sensors_path, mode='r', newline='\n') as f:
+            first_line = re.compile(' |\t').split(f.readline())
+            return int(first_line[1])
+
+    def get_len_video(self, sub, act):
+        images_path = os.path.join(self.data_path, sub, 'images', act)
+        camera_1 = os.listdir(images_path)[0]
+        images_camera_1_path = os.path.join(images_path, camera_1)
+        
+        # for act in 
+        return len(os.listdir(images_camera_1_path))
+
+    def get_len_data(self, sub, act):
+        return min(self.get_len_imu(sub, act), self.get_len_video(sub, act))
 
     def init_imu(self, sub, act):
         imu_path = os.path.join(self.data_path, sub, 'imu')

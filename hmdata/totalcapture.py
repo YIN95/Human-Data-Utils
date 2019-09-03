@@ -50,6 +50,7 @@ class TotalCapture(Dataset):
                                  'rom1', 'rom2', 'rom3']
         self.testing_actions = ['acting3', 'freestyle3', 'walking2']
         self.data_dict = {}
+        self.imu_buffer = None
 
         for sub in tqdm(self.training_subjects,
                         total=len(self.training_subjects),
@@ -76,14 +77,15 @@ class TotalCapture(Dataset):
             imu_path, '{0}_{1}_Xsens.sensors'.format(sub_lower, act))
         with open(imu_sensors_path, mode='r', newline='\n') as f:
             first_line = re.compile(' |\t').split(f.readline())
-            return int(first_line[1])
+
+        return int(first_line[1])
 
     def get_len_video(self, sub, act):
+        return 999999
         images_path = os.path.join(self.data_path, sub, 'images', act)
         camera_1 = os.listdir(images_path)[0]
         images_camera_1_path = os.path.join(images_path, camera_1)
-        
-        # for act in 
+
         return len(os.listdir(images_camera_1_path))
 
     def get_len_data(self, sub, act):
@@ -159,7 +161,7 @@ class TotalCapture(Dataset):
         pass
 
     def __getitem__(self, index):
-        pass
+        
 
 
 if __name__ == '__main__':

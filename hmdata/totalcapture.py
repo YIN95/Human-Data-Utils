@@ -11,7 +11,6 @@ import torch
 
 import numpy as np
 import pandas as pd
-import horovod.torch as hvd
 
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm

@@ -7,11 +7,13 @@ Author:
 import os
 import re
 import quaternion
+import torch
 
 import numpy as np
 import pandas as pd
+import horovod.torch as hvd
 
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
 actionList = {'acting1', 'acting2', 'acting3',
@@ -23,7 +25,7 @@ gt = {'Ori', 'Pos'}
 
 
 class TotalCapture(Dataset):
-    def __init__(self, data_path, data_transform):
+    def __init__(self, data_path, data_transform, mode='train'):
         self.data_path = data_path
         self.data_transform = data_transform
         '''
@@ -49,15 +51,27 @@ class TotalCapture(Dataset):
                                  'walking1', 'walking3',
                                  'rom1', 'rom2', 'rom3']
         self.testing_actions = ['acting3', 'freestyle3', 'walking2']
+
+        if mode == 'train':
+            self.subjects = self.training_subjects
+            self.actions = self.training_actions
+        elif mode == 'test':
+            self.subjects = self.testing_subjects
+            self.actions = self.testing_actions
+        elif mode == 'debug':
+            self.subjects = ['S1', 'S2']
+            self.actions = ['acting2', 'walking2']
+
         self.data_dict = {}
         self.imu_buffer = None
+        self._length = 0
 
-        for sub in tqdm(self.training_subjects,
-                        total=len(self.training_subjects),
-                        desc='Scanning Training Data'):
+        for sub in tqdm(self.subjects,
+                        total=len(self.subjects),
+                        desc='Scanning Data'):
             self.data_dict[sub] = {}
-            for act in tqdm(self.training_actions,
-                            total=len(self.training_actions),
+            for act in tqdm(self.actions,
+                            total=len(self.actions),
                             desc='Subject - {}'.format(sub)):
                 self.data_dict[sub][act] = {}
                 self.data_dict[sub][act]['len_imu'] = self.get_len_imu(
@@ -67,8 +81,10 @@ class TotalCapture(Dataset):
                 self.data_dict[sub][act]['len'] = min(
                     self.data_dict[sub][act]['len_imu'],
                     self.data_dict[sub][act]['len_video'])
-        # self.init_imu(self.training_subjects[0], self.training_actions[0])
-        self.get_len_imu(self.training_subjects[0], self.training_actions[0])
+
+                self.data_dict[sub][act]['imu'] = self.init_imu(sub, act)
+
+                self._length += self.data_dict[sub][act]['len']
 
     def get_len_imu(self, sub, act):
         imu_path = os.path.join(self.data_path, sub, 'imu')
@@ -158,15 +174,26 @@ class TotalCapture(Dataset):
         return imu_sensors
 
     def __len__(self):
-        pass
+        return self._length
 
     def __getitem__(self, index):
-        
+        _sum = 0
+        _next_sum = 0
+        for sub in self.subjects:
+            for act in self.actions:
+                _sum = _next_sum
+                _next_sum = _sum + self.data_dict[sub][act]['len']
+                if index < _next_sum:
+                    _imu = self.data_dict[sub][act]['imu'][index-_sum]
+                    return torch.tensor(_imu).float()
 
 
 if __name__ == '__main__':
     data_path = '/media/ywj/Data/totalcapture/totalcapture'
     data_transform = 'default'
-    tp_data = TotalCapture(data_path, data_transform)
+    tp_data = TotalCapture(data_path, data_transform, mode='debug')
 
     pass
+    tp_data_loader = DataLoader(tp_data, batch_size=1, shuffle=False)
+    for i in tp_data_loader:
+        print(i)

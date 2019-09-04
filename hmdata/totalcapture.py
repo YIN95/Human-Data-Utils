@@ -11,8 +11,10 @@ import torch
 
 import numpy as np
 import pandas as pd
+import PIL.Image as Image
 
 from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
 from tqdm import tqdm
 
 actionList = {'acting1', 'acting2', 'acting3',
@@ -23,10 +25,19 @@ actionList = {'acting1', 'acting2', 'acting3',
 gt = {'Ori', 'Pos'}
 
 
+def get_transform(mode='default'):
+    if mode in ['default']:
+        return transforms.Compose([
+            transforms.ToTensor(),
+        ])
+
+
 class TotalCapture(Dataset):
-    def __init__(self, data_path, data_transform, mode='train'):
+    def __init__(self, data_path, mode='train'):
+        super(TotalCapture, self).__init__()
+
         self.data_path = data_path
-        self.data_transform = data_transform
+        self.image_transform = get_transform('default')
         '''
         # The train and test partition are performed wrt to the subjects
         # and sequences, the training is perfomed on subjects 1,2 and 3
@@ -58,11 +69,10 @@ class TotalCapture(Dataset):
             self.subjects = self.testing_subjects
             self.actions = self.testing_actions
         elif mode == 'debug':
-            self.subjects = ['S1', 'S2']
-            self.actions = ['acting2', 'walking2']
+            self.subjects = ['S1']
+            self.actions = ['acting2']
 
         self.data_dict = {}
-        self.imu_buffer = None
         self._length = 0
 
         for sub in tqdm(self.subjects,
@@ -172,6 +182,18 @@ class TotalCapture(Dataset):
 
         return imu_sensors
 
+    def get_imgs(self, sub, act, index):
+        _images_path = os.path.join(self.data_path, sub, 'images', act)
+        _cameras = os.listdir(_images_path)
+        imgs = []
+        for _camera in _cameras:
+            _path = os.path.join(_images_path, _camera, str(index)+'.jpg')
+            _img = Image.open(_path)
+            _img = self.image_transform(_img)
+            # _img
+            imgs.append(_img)
+        return imgs
+
     def __len__(self):
         return self._length
 
@@ -183,16 +205,15 @@ class TotalCapture(Dataset):
                 _sum = _next_sum
                 _next_sum = _sum + self.data_dict[sub][act]['len']
                 if index < _next_sum:
-                    _imu = self.data_dict[sub][act]['imu'][index-_sum]
+                    sub_index = index-_sum
+                    _imu = self.data_dict[sub][act]['imu'][sub_index]
+                    # _imgs = self.get_imgs(sub, act, sub_index)
                     return torch.tensor(_imu).float()
-
 
 if __name__ == '__main__':
     data_path = '/media/ywj/Data/totalcapture/totalcapture'
-    data_transform = 'default'
-    tp_data = TotalCapture(data_path, data_transform, mode='debug')
+    tp_data = TotalCapture(data_path, mode='debug')
 
-    pass
     tp_data_loader = DataLoader(tp_data, batch_size=1, shuffle=False)
     for i in tp_data_loader:
         print(i)

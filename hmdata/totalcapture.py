@@ -33,11 +33,12 @@ def get_transform(mode='default'):
 
 
 class TotalCapture(Dataset):
-    def __init__(self, data_path, mode='train'):
+    def __init__(self, data_path, cues='all', mode='train'):
         super(TotalCapture, self).__init__()
 
         self.data_path = data_path
         self.image_transform = get_transform('default')
+        self.cues = cues
         '''
         # The train and test partition are performed wrt to the subjects
         # and sequences, the training is perfomed on subjects 1,2 and 3
@@ -106,7 +107,6 @@ class TotalCapture(Dataset):
         return int(first_line[1])
 
     def get_len_video(self, sub, act):
-        return 999999
         images_path = os.path.join(self.data_path, sub, 'images', act)
         camera_1 = os.listdir(images_path)[0]
         images_camera_1_path = os.path.join(images_path, camera_1)
@@ -152,15 +152,16 @@ class TotalCapture(Dataset):
             names=list(range(8)),
             engine='python'
         )
-        imu_sensors = imu_sensors.iloc[1:, 1:].values.astype(
+        imu_quaternions = imu_sensors.iloc[1:, 1:].values.astype(
             np.float32).reshape(-1, 14, 7)[:, 1:14, :4]     # wxyz
 
-        imu_sensors_length = imu_sensors.shape[0]       # length of imu data
-        imu_sensors_num = imu_sensors.shape[1]      # the number of sensors
+        # length of imu data
+        imu_sensors_length = imu_quaternions.shape[0]
+        imu_sensors_num = imu_quaternions.shape[1]      # the number of sensors
 
         # sensors data to quaternion
-        imu_sensors = imu_sensors.reshape(-1, 4)
-        imu_sensors = quaternion.from_float_array(imu_sensors)
+        imu_quaternions = imu_quaternions.reshape(-1, 4)
+        imu_quaternions = quaternion.from_float_array(imu_quaternions)
 
         # bone
         # inverse
@@ -174,13 +175,20 @@ class TotalCapture(Dataset):
         imu_ref = np.tile(imu_ref, imu_sensors_length)
 
         # R^g_bi = R_ig Â· R_i Â· (R_ib)^âˆ’1
-        imu_sensors = imu_ref*imu_sensors*imu_bone
-        imu_sensors = quaternion.as_float_array(imu_sensors).astype(np.float32)
+        imu_quaternions = imu_ref*imu_quaternions*imu_bone
+        imu_quaternions = quaternion.as_float_array(
+            imu_quaternions).astype(np.float32)
 
-        imu_sensors = imu_sensors.reshape(
+        imu_quaternions = imu_quaternions.reshape(
             imu_sensors_length, imu_sensors_num, 4)
 
-        return imu_sensors
+        imu_acceleration = imu_sensors.iloc[1:, 1:].values.astype(
+            np.float32).reshape(-1, 14, 7)[:, 1:14, 4:]
+
+        imu_sensors_data = np.concatenate(
+            (imu_quaternions, imu_acceleration), axis=2)
+
+        return imu_sensors_data
 
     def get_imgs(self, sub, act, index):
         _images_path = os.path.join(self.data_path, sub, 'images', act)
@@ -206,9 +214,18 @@ class TotalCapture(Dataset):
                 _next_sum = _sum + self.data_dict[sub][act]['len']
                 if index < _next_sum:
                     sub_index = index-_sum
-                    _imu = self.data_dict[sub][act]['imu'][sub_index]
-                    # _imgs = self.get_imgs(sub, act, sub_index)
-                    return torch.tensor(_imu).float()
+
+                    if self.cues == 'all':
+                        _imu = self.data_dict[sub][act]['imu'][sub_index]
+                        _imgs = self.get_imgs(sub, act, sub_index)
+                        return torch.tensor(_imu).float(), _imgs
+                    elif self.cues == 'imu':
+                        _imu = self.data_dict[sub][act]['imu'][sub_index]
+                        return torch.tensor(_imu).float()
+                    elif self.cues == 'images':
+                        _imgs = self.get_imgs(sub, act, sub_index)
+                        return _imgs
+
 
 if __name__ == '__main__':
     data_path = '/media/ywj/Data/totalcapture/totalcapture'

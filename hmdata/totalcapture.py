@@ -225,6 +225,8 @@ class TotalCapture(Dataset):
                     elif self.cues == 'images':
                         _imgs = self.get_imgs(sub, act, sub_index)
                         return _imgs
+        # TODO NET
+        # GET GROUNDTRUTH
 
 
 if __name__ == '__main__':

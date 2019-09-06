@@ -50,7 +50,8 @@ datafolder/
 
 Convert all videos to images:
 ```shell
-bash video2images.sh data_dir num_of_processes
+$ cd example
+$ bash video2images.sh data_dir num_of_processes
 ```
 <!-- bash video2images.sh /media/ywj/Data/totalcapture/totalcapture 4 -->
 <!-- bash video2images.sh /mnt/md0/yinw/project/data/totalcapture 4 -->

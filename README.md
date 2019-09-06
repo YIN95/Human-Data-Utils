@@ -1,5 +1,12 @@
 # Human-Data-Utils
 
+## Install
+
+To install hmdata:
+```shell
+$ pip install hmdata
+```
+
 ## List of Data
 
 * [TotalCapture](#TotalCapture)

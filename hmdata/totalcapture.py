@@ -17,11 +17,6 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 
-actionList = {'acting1', 'acting2', 'acting3',
-              'freestyle1', 'freestyle2', 'freestyle3',
-              'rom1', 'rom2', 'rom3',
-              'walking1', 'walking2', 'walking3'}
-
 gt = {'Ori', 'Pos'}
 
 
@@ -39,7 +34,6 @@ class TotalCapture(Dataset):
         self.data_path = data_path
         self.image_transform = get_transform('default')
         self.cues = cues
-        '''
         # The train and test partition are performed wrt to the subjects
         # and sequences, the training is perfomed on subjects 1,2 and 3
         # of the following seqeunces:
@@ -53,15 +47,34 @@ class TotalCapture(Dataset):
         #     Walking 2
         #     Freestyle 3
         #     Acting 3
-        '''
         self.training_subjects = ['S1', 'S2', 'S3']
         self.testing_subjects = ['S1', 'S2', 'S3', 'S4', 'S5']
-
         self.training_actions = ['acting1', 'acting2',
                                  'freestyle1', 'freestyle2',
                                  'walking1', 'walking3',
                                  'rom1', 'rom2', 'rom3']
         self.testing_actions = ['acting3', 'freestyle3', 'walking2']
+        # The IMU data is provided by 13 sensors on key body parts
+        self._imu_joint = ['Head', 'Sternum', 'Pelvis',
+                           'L_UpArm', 'R_UpArm', 'L_LowArm', 'R_LowArm',
+                           'L_UpLeg', 'R_UpLeg', 'L_LowLeg', 'R_LowLeg',
+                           'L_Foot', 'R_Foot']
+        self.imu_joint = ['Head', 'Spine3', 'Hips',
+                          'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm',
+                          'LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg',
+                          'LeftFoot', 'RightFoot']
+        # The automatically labelled ground truth utilises the optical
+        # marker based Vicon system, it calculates 21 3D world joint
+        # positions and angles.
+        self.vicon_joint = ['Hips',
+                            'Spine', 'Spine1', 'Spine2', 'Spine3',
+                            'Neck', 'Head',
+                            'RightShoulder', 'RightArm',
+                            'RightForeArm', 'RightHand',
+                            'LeftShoulder', 'LeftArm',
+                            'LeftForeArm', 'LeftHand',
+                            'RightUpLeg', 'RightLeg', 'RightFoot',
+                            'LeftUpLeg', 'LeftLeg', 'LeftFoot']
 
         if mode == 'train':
             self.subjects = self.training_subjects
@@ -93,7 +106,7 @@ class TotalCapture(Dataset):
                     self.data_dict[sub][act]['len_video'])
 
                 self.data_dict[sub][act]['imu'] = self.init_imu(sub, act)
-
+                self.data_dict[sub][act]['vicon'] = self.init_vicon(sub, act)
                 self._length += self.data_dict[sub][act]['len']
 
     def get_len_imu(self, sub, act):
@@ -112,6 +125,10 @@ class TotalCapture(Dataset):
         images_camera_1_path = os.path.join(images_path, camera_1)
 
         return len(os.listdir(images_camera_1_path))
+
+    def get_len_vicon(self, sub, act):
+        # vicon_path = os.path.join(self.data_path, sub, 'vicon', act)
+        return self.get_len_imu(sub, act)
 
     def get_len_data(self, sub, act):
         return min(self.get_len_imu(sub, act), self.get_len_video(sub, act))
@@ -190,6 +207,29 @@ class TotalCapture(Dataset):
 
         return imu_sensors_data
 
+    def init_vicon(self, sub, act):
+        vicon_path = os.path.join(self.data_path, sub, 'vicon', act)
+        pos_path = os.path.join(vicon_path, 'gt_skel_gbl_pos.txt')
+        ori_path = os.path.join(vicon_path, 'gt_skel_gbl_ori.txt')
+        pos = pd.read_csv(
+            pos_path,
+            sep=' |\t',
+            names=list(range(63)),
+            engine='python'
+        )
+        ori = pd.read_csv(
+            ori_path,
+            sep=' |\t',
+            names=list(range(84)),
+            engine='python'
+        )
+
+        pos = pos.iloc[1:, :].values.astype(np.float32).reshape(-1, 21, 3)
+        ori = ori.iloc[1:, :].values.astype(np.float32).reshape(-1, 21, 4)
+
+        vicon = np.concatenate((pos, ori), axis=2)
+        return vicon
+
     def get_imgs(self, sub, act, index):
         _images_path = os.path.join(self.data_path, sub, 'images', act)
         _cameras = os.listdir(_images_path)
@@ -218,20 +258,23 @@ class TotalCapture(Dataset):
                     if self.cues == 'all':
                         _imu = self.data_dict[sub][act]['imu'][sub_index]
                         _imgs = self.get_imgs(sub, act, sub_index)
-                        return torch.tensor(_imu).float(), _imgs
+                        _vicon = self.data_dict[sub][act]['vicon'][sub_index]
+                        return torch.tensor(_imu).float(), _imgs, \
+                            torch.tensor(_vicon).float()
                     elif self.cues == 'imu':
                         _imu = self.data_dict[sub][act]['imu'][sub_index]
                         return torch.tensor(_imu).float()
                     elif self.cues == 'images':
                         _imgs = self.get_imgs(sub, act, sub_index)
                         return _imgs
-        # TODO NET
-        # GET GROUNDTRUTH
+                    elif self.cues == 'vicon':
+                        _vicon = self.data_dict[sub][act]['vicon'][sub_index]
+                        return torch.tensor(_vicon).float()
 
 
 if __name__ == '__main__':
     data_path = '/media/ywj/Data/totalcapture/totalcapture'
-    tp_data = TotalCapture(data_path, mode='debug')
+    tp_data = TotalCapture(data_path, cues='all', mode='debug')
 
     tp_data_loader = DataLoader(tp_data, batch_size=1, shuffle=False)
     for i in tp_data_loader:

@@ -24,17 +24,17 @@ To request access to the TotalCapture Dataset, or for other queries please conta
 Download the TotalCapture Dataset and prepare in the following format:
 ```
 datafolder/
-    |->S1/
-        |->gyro_mag/
+    |-> S1/
+        |-> gyro_mag/
             |-> acting1_Xsens_AuxFields.sensors
             |-> acting2_Xsens_AuxFields.sensors
             |-> ...
-        |->imu/
+        |-> imu/
             |-> s2_acting1_calib_imu_bone.txt
             |-> s2_acting1_calib_imu_ref.txt
             |-> s2_acting1_Xsens.sensors
             |-> ...
-        |->video/
+        |-> video/
             |-> acting1/
                 |-> TC_S2_acting1_cam1.mp4
                 |-> ...
@@ -42,6 +42,11 @@ datafolder/
             |-> acting2/
             |-> .../
             |-> walking3/
+        |-> vicon/
+            |-> acting1/
+                |-> gt_skel_gbl_pos.txt
+                |-> gt_skel_gbl_ori.txt
+            |-> ...
     |->.../
     |->S5/
 ```

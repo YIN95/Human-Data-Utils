@@ -9,8 +9,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="hmdata",
-    version="0.0.8",
-    author="Wenjie YIn",
+    version="0.1.2",
+    author="Wenjie Yin",
     author_email="yinwenjie159@hotmail.com",
     description="A package for human data",
     long_description=long_description,
@@ -25,3 +25,6 @@ setuptools.setup(
     license="MIT license",
     python_requires='>=3.5',
 )
+
+# python3 setup.py sdist bdist_wheel
+# python3 -m twine upload dist/*

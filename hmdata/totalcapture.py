@@ -34,19 +34,21 @@ class TotalCapture(Dataset):
         self.data_path = data_path
         self.image_transform = get_transform('default')
         self.cues = cues
-        # The train and test partition are performed wrt to the subjects
-        # and sequences, the training is perfomed on subjects 1,2 and 3
-        # of the following seqeunces:
-        #     ROM 1,2,3
-        #     Walking 1,3
-        #     Freestyle 1,2
-        #     Acting 1,2
+        '''
+        The train and test partition are performed wrt to the subjects
+        and sequences, the training is perfomed on subjects 1,2 and 3
+        of the following seqeunces:
+            ROM 1,2,3
+            Walking 1,3
+            Freestyle 1,2
+            Acting 1,2
 
-        # test set is perfomed on sbjects 1,2,3,4 and 5,
-        # on the following seqeunces：
-        #     Walking 2
-        #     Freestyle 3
-        #     Acting 3
+        test set is perfomed on sbjects 1,2,3,4 and 5,
+        on the following seqeunces：
+            Walking 2
+            Freestyle 3
+            Acting 3
+        '''
         self.training_subjects = ['S1', 'S2', 'S3']
         self.testing_subjects = ['S1', 'S2', 'S3', 'S4', 'S5']
         self.training_actions = ['acting1', 'acting2',
@@ -107,7 +109,78 @@ class TotalCapture(Dataset):
 
                 self.data_dict[sub][act]['imu'] = self.init_imu(sub, act)
                 self.data_dict[sub][act]['vicon'] = self.init_vicon(sub, act)
+
+                self.data_dict[sub][act]['imu_mean'] = \
+                    np.mean(self.data_dict[sub][act]['imu'], axis=(0, 1))
+                self.data_dict[sub][act]['imu_std'] = \
+                    np.std(self.data_dict[sub][act]['imu'], axis=(0, 1))
+                self.data_dict[sub][act]['vicon_mean'] = \
+                    np.mean(self.data_dict[sub][act]['vicon'], axis=(0, 1))
+                self.data_dict[sub][act]['vicon_std'] = \
+                    np.std(self.data_dict[sub][act]['vicon'], axis=(0, 1))
                 self._length += self.data_dict[sub][act]['len']
+
+        self.data_dict['imu_mean'] = self.get_mean('imu')
+        self.data_dict['vicon_mean'] = self.get_mean('vicon')
+        self.data_dict['imu_std'] = self.get_std('imu')
+        self.data_dict['vicon_std'] = self.get_std('vicon')
+
+        self.normalization()
+
+    def normalization(self):
+
+        self.data_dict['imu_mean'] = self.get_mean('imu')
+        self.data_dict['vicon_mean'] = self.get_mean('vicon')
+        self.data_dict['imu_std'] = self.get_std('imu')
+        self.data_dict['vicon_std'] = self.get_std('vicon')
+
+        for sub in self.subjects:
+            for act in self.actions:
+                self.data_dict[sub][act]['imu'] -= \
+                    self.data_dict['imu_mean']
+                self.data_dict[sub][act]['vicon'] -= \
+                    self.data_dict['vicon_mean']
+
+        self.data_dict['imu_max'] = self.get_max('imu')
+        self.data_dict['vicon_max'] = self.get_max('vicon')
+
+        for sub in self.subjects:
+            for act in self.actions:
+                self.data_dict[sub][act]['imu'] /= \
+                    self.data_dict['imu_max']
+                self.data_dict[sub][act]['vicon'] /= \
+                    self.data_dict['vicon_max']
+
+    def get_mean(self, cue):
+        temp = np.zeros((7, ))
+        for sub in self.subjects:
+            for act in self.actions:
+                temp += self.data_dict[sub][act][cue+'_mean'] * \
+                    self.data_dict[sub][act]['len']
+        temp /= self._length
+        return temp
+
+    def get_max(self, cue):
+        cue_max = np.zeros((7, ))
+        for sub in self.subjects:
+            for act in self.actions:
+                cue_max_temp = np.max(self.data_dict[sub][act][cue], axis=(0, 1))
+                cue_max = np.array([cue_max, cue_max_temp])
+                cue_max = np.max(cue_max, axis=0)
+
+        return cue_max
+
+    def get_std(self, cue):
+        temp = np.zeros((7, ))
+        for sub in self.subjects:
+            for act in self.actions:
+                temp += self.data_dict[sub][act]['len'] * \
+                    (pow(self.data_dict[sub][act][cue+'_mean'], 2) +
+                     pow(self.data_dict[sub][act][cue+'_std'], 2))
+        temp /= self._length
+        temp -= pow(self.data_dict[cue+'_mean'], 2)
+        std = np.sqrt(temp)
+        return std
 
     def get_len_imu(self, sub, act):
         imu_path = os.path.join(self.data_path, sub, 'imu')
@@ -270,11 +343,23 @@ class TotalCapture(Dataset):
                     elif self.cues == 'vicon':
                         _vicon = self.data_dict[sub][act]['vicon'][sub_index]
                         return torch.tensor(_vicon).float()
+                    elif self.cues == 'vicon-imu':
+                        _vicon = self.data_dict[sub][act]['vicon'][sub_index]
+                        _imu = self.data_dict[sub][act]['imu'][sub_index]
+                        return torch.tensor(_vicon).float(), \
+                            torch.tensor(_imu).float()
+                    elif self.cues == 'vicon-imu-ori':
+                        _vicon = self.data_dict[
+                            sub][act]['vicon'][sub_index][:, 3:]
+                        _imu = self.data_dict[
+                            sub][act]['imu'][sub_index][:, :4]
+                        return torch.tensor(_vicon).float(), \
+                            torch.tensor(_imu).float()
 
 
 if __name__ == '__main__':
     data_path = '/media/ywj/Data/totalcapture/totalcapture'
-    tp_data = TotalCapture(data_path, cues='all', mode='debug')
+    tp_data = TotalCapture(data_path, cues='all', mode='test')
 
     tp_data_loader = DataLoader(tp_data, batch_size=1, shuffle=False)
     for i in tp_data_loader:

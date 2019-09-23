@@ -164,7 +164,8 @@ class TotalCapture(Dataset):
         cue_max = np.zeros((7, ))
         for sub in self.subjects:
             for act in self.actions:
-                cue_max_temp = np.max(self.data_dict[sub][act][cue], axis=(0, 1))
+                cue_max_temp = np.max(self.data_dict[sub][act][cue],
+                                      axis=(0, 1))
                 cue_max = np.array([cue_max, cue_max_temp])
                 cue_max = np.max(cue_max, axis=0)
 

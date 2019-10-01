@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_frame', default=500)
     arg = parser.parse_args()
 
-    tp_train_data = TotalCapture(arg.data_path, cues='vicon', mode='train')
+    tp_train_data = TotalCapture(arg.data_path, cues='vicon', mode='c-train')
     gendata(data=tp_train_data, out_path=arg.out_folder,
             cues='vicon', part='train', pace=arg.pace, max_frame=arg.max_frame)
     print('==')

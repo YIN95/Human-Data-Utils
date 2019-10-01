@@ -59,7 +59,7 @@ class TotalCapture(Dataset):
 
         self.c_training_subjects = ['S1', 'S2', 'S3']
         self.c_testing_subjects = ['S4', 'S5']
-        self.c_training_actions = ['acting1', 'acting2', 'acting3'
+        self.c_training_actions = ['acting1', 'acting2', 'acting3',
                                    'freestyle1', 'freestyle2', 'freestyle3'
                                    'walking1', 'walking2', 'walking3',
                                    'rom1', 'rom2', 'rom3']

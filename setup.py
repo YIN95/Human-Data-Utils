@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="hmdata",
-    version="0.2.2",
+    version="0.2.3",
     author="Wenjie Yin",
     author_email="yinwenjie159@hotmail.com",
     description="A package for human data",

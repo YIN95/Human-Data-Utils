@@ -58,13 +58,12 @@ class TotalCapture(Dataset):
         self.testing_actions = ['acting3', 'freestyle3', 'walking2']
 
         self.c_training_subjects = ['S1', 'S2', 'S3']
-        self.c_testing_subjects = ['S4', 'S5']
-        self.c_training_actions = ['acting1', 'acting2', 'acting3',
-                                   'freestyle1', 'freestyle2', 'freestyle3',
-                                   'walking1', 'walking2', 'walking3',
-                                   'rom1', 'rom2', 'rom3']
-        self.c_testing_actions = ['acting3', 'freestyle1',
-                                  'rom3', 'freestyle3', 'walking2']
+        self.c_testing_subjects = ['S1', 'S2', 'S3']
+        self.c_training_actions = ['acting1', 'acting2',
+                                   'freestyle1', 'freestyle2',
+                                   'walking1', 'walking3',
+                                   'rom1', 'rom2']
+        self.c_testing_actions = ['acting3', 'freestyle3', 'walking2', 'rom3']
 
         # The IMU data is provided by 13 sensors on key body parts
         self._imu_joint = ['Head', 'Sternum', 'Pelvis',

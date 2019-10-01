@@ -27,6 +27,7 @@ def gendata(data: TotalCapture, out_path, cues, part, pace, max_frame):
             label = action2label(act)
             sub_samples = []
             temp = data.data_dict[sub][act][cues]
+            temp = temp[150:len(temp)-150, :, :]
             length = len(temp) % pace
             temp = temp[length:, :, :]
             temp = temp.transpose(2, 0, 1)
@@ -45,17 +46,18 @@ def gendata(data: TotalCapture, out_path, cues, part, pace, max_frame):
     np.save(os.path.join(out_path, part+'_data.npy'), samples)
     with open(os.path.join(out_path, part+'_label.pkl'), 'wb') as f:
         pickle.dump(labels, f)
-    
+
 
 if __name__ == '__main__':
     # a = np.load('data/TotalCapture/imu/train_data.npy')
-    with open('data/TotalCapture/imu/train_label.pkl', 'rb') as f:
-        label = pickle.load(f)
+    # with open('data/TotalCapture/imu/train_label.pkl', 'rb') as f:
+    #     label = pickle.load(f)
     import ptvsd
     ptvsd.enable_attach(address=('localhost'))
     ptvsd.wait_for_attach()
 
-    parser = argparse.ArgumentParser(description='TotalCapture Data Converter.')
+    parser = argparse.ArgumentParser(
+        description='TotalCapture Data Converter.')
     parser.add_argument(
         '--data_path', default='/media/ywj/Data/totalcapture/totalcapture')
     parser.add_argument('--out_folder', default='data/TotalCapture/imu')

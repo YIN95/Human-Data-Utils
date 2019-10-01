@@ -27,6 +27,7 @@ def gendata(data: TotalCapture, out_path, cues, part, pace, max_frame):
             label = action2label(act)
             sub_samples = []
             temp = data.data_dict[sub][act][cues]
+            temp = temp[150:len(temp)-150, :, :]
             length = len(temp) % pace
             temp = temp[length:, :, :]
             temp = temp.transpose(2, 0, 1)
@@ -66,4 +67,7 @@ if __name__ == '__main__':
     tp_train_data = TotalCapture(arg.data_path, cues='vicon', mode='c-train')
     gendata(data=tp_train_data, out_path=arg.out_folder,
             cues='vicon', part='train', pace=arg.pace, max_frame=arg.max_frame)
+    tp_test_data = TotalCapture(arg.data_path, cues='vicon', mode='c-test')
+    gendata(data=tp_test_data, out_path=arg.out_folder,
+            cues='vicon', part='val', pace=arg.pace, max_frame=arg.max_frame)
     print('==')

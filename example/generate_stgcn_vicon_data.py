@@ -31,7 +31,7 @@ def gendata(data: TotalCapture, out_path, cues, part, pace, max_frame):
             temp = temp[length:, :, :]
             temp = temp.transpose(2, 0, 1)
 
-            for i in range(300, temp.shape[1], pace):
+            for i in range(max_frame, temp.shape[1], pace):
                 sample = temp[:, i-max_frame:i, :]
                 sub_samples.append(sample)
                 labels.append(label)
@@ -45,25 +45,25 @@ def gendata(data: TotalCapture, out_path, cues, part, pace, max_frame):
     np.save(os.path.join(out_path, part+'_data.npy'), samples)
     with open(os.path.join(out_path, part+'_label.pkl'), 'wb') as f:
         pickle.dump(labels, f)
-    
+
 
 if __name__ == '__main__':
-    # a = np.load('data/TotalCapture/imu/train_data.npy')
-    with open('data/TotalCapture/imu/train_label.pkl', 'rb') as f:
-        label = pickle.load(f)
+    # a = np.load('data/TotalCapture/vicon/train_data.npy')
+    # with open('data/TotalCapture/imu/train_label.pkl', 'rb') as f:
+    #     label = pickle.load(f)
     import ptvsd
     ptvsd.enable_attach(address=('localhost'))
     ptvsd.wait_for_attach()
 
-    parser = argparse.ArgumentParser(description='NTU-RGB-D Data Converter.')
+    parser = argparse.ArgumentParser(description='TotalCapture Data Converter.')
     parser.add_argument(
         '--data_path', default='/media/ywj/Data/totalcapture/totalcapture')
-    parser.add_argument('--out_folder', default='data/TotalCapture/imu')
-    parser.add_argument('--pace', default=30)
-    parser.add_argument('--max_frame', default=300)
+    parser.add_argument('--out_folder', default='data/TotalCapture/vicon')
+    parser.add_argument('--pace', default=100)
+    parser.add_argument('--max_frame', default=500)
     arg = parser.parse_args()
 
-    tp_train_data = TotalCapture(arg.data_path, cues='imu', mode='test')
+    tp_train_data = TotalCapture(arg.data_path, cues='vicon', mode='train')
     gendata(data=tp_train_data, out_path=arg.out_folder,
-            cues='imu', part='val', pace=arg.pace, max_frame=arg.max_frame)
+            cues='vicon', part='train', pace=arg.pace, max_frame=arg.max_frame)
     print('==')

@@ -56,6 +56,16 @@ class TotalCapture(Dataset):
                                  'walking1', 'walking3',
                                  'rom1', 'rom2', 'rom3']
         self.testing_actions = ['acting3', 'freestyle3', 'walking2']
+
+        self.c_training_subjects = ['S1', 'S2', 'S3']
+        self.c_testing_subjects = ['S4', 'S5']
+        self.c_training_actions = ['acting1', 'acting2', 'acting3'
+                                   'freestyle1', 'freestyle2', 'freestyle3'
+                                   'walking1', 'walking2', 'walking3',
+                                   'rom1', 'rom2', 'rom3']
+        self.c_testing_actions = ['acting3', 'freestyle1',
+                                  'rom3', 'freestyle3', 'walking2']
+
         # The IMU data is provided by 13 sensors on key body parts
         self._imu_joint = ['Head', 'Sternum', 'Pelvis',
                            'L_UpArm', 'R_UpArm', 'L_LowArm', 'R_LowArm',
@@ -84,6 +94,12 @@ class TotalCapture(Dataset):
         elif mode == 'test':
             self.subjects = self.testing_subjects
             self.actions = self.testing_actions
+        if mode == 'c-train':
+            self.subjects = self.c_training_subjects
+            self.actions = self.c_training_actions
+        elif mode == 'c-test':
+            self.subjects = self.c_testing_subjects
+            self.actions = self.c_testing_actions
         elif mode == 'debug':
             self.subjects = ['S1']
             self.actions = ['acting2']

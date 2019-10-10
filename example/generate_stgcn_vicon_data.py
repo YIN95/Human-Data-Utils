@@ -49,19 +49,17 @@ def gendata(data: TotalCapture, out_path, cues, part, pace, max_frame):
 
 
 if __name__ == '__main__':
-    # a = np.load('data/TotalCapture/vicon/train_data.npy')
-    # with open('data/TotalCapture/imu/train_label.pkl', 'rb') as f:
-    #     label = pickle.load(f)
     import ptvsd
     ptvsd.enable_attach(address=('localhost'))
     ptvsd.wait_for_attach()
-
+    # breakpoint()
+    
     parser = argparse.ArgumentParser(description='TotalCapture Data Converter.')
     parser.add_argument(
-        '--data_path', default='/media/ywj/Data/totalcapture/totalcapture')
+        '--data_path', default='/mnt/md0/yinw/project/data/totalcapture')
     parser.add_argument('--out_folder', default='data/TotalCapture/vicon')
     parser.add_argument('--pace', default=100)
-    parser.add_argument('--max_frame', default=500)
+    parser.add_argument('--max_frame', default=300)
     arg = parser.parse_args()
 
     tp_train_data = TotalCapture(arg.data_path, cues='vicon', mode='c-train')
